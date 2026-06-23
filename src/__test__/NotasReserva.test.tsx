@@ -31,4 +31,17 @@ describe("NotasReserva - US14 Edición de Notas de Reserva", () => {
     expect(screen.getByTestId("panel-detalles-reserva")).toBeInTheDocument();
   });
 
+  test("debe bloquear el envío y mostrar advertencia si se intenta guardar una nota vacía", () => {
+    render(<NotasReserva notaInicial="   " />); // Solo espacios en blanco
+
+    const botonGuardar = screen.getByRole("button", { name: /guardar nota/i });
+    fireEvent.click(botonGuardar);
+
+    // Validaciones de bloqueo (Criterio de Aceptación 2)
+    expect(screen.getByRole("alert")).toHaveTextContent("La nota no puede estar vacía");
+    expect(screen.getByRole("button", { name: /guardar nota/i })).not.toHaveTextContent("Guardando...");
+  });
+
+  
+
 });
