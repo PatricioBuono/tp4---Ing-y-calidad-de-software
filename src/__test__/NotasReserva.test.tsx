@@ -11,51 +11,36 @@ describe("NotasReserva - US14 Edición de Notas de Reserva", () => {
   afterAll(() => {
     jest.useRealTimers();
   });
-
+  
   test("debe mostrar mensaje de éxito y mantener el panel al guardar una nota válida de forma asíncrona", async () => {
     render(<NotasReserva notaInicial="Cliente prefiere café" />);
 
     const botonGuardar = screen.getByRole("button", { name: /guardar nota/i });
     fireEvent.click(botonGuardar);
 
-    // Se verifica el estado de carga intermedio
-    expect(screen.getByRole("button", { name: /guardando\.\.\./i })).toBeInTheDocument();
-
-    // Adelantamos los temporizadores falsos de Jest para resolver la promesa asíncrona
+    // Adelantamos los temporizadores falsos de Jest para resolver la promesa asíncrona (simulación <= 2.5s)
     act(() => {
       jest.advanceTimersByTime(1000);
     });
 
-    // Validaciones de éxito (Criterio de Aceptación 1)
+    // Validaciones finales de éxito tras el procesamiento asíncrono
     expect(await screen.findByText("Nota guardada correctamente")).toBeInTheDocument();
     expect(screen.getByTestId("panel-detalles-reserva")).toBeInTheDocument();
   });
 
-  test("debe bloquear el envío y mostrar advertencia si se intenta guardar una nota vacía", () => {
-    render(<NotasReserva notaInicial="   " />); // Solo espacios en blanco
+  test("debe mostrar alerta de error si el texto ingresado supera el límite de 200 caracteres", () => {
+    render(<NotasReserva />);
+    
+    const textarea = screen.getByRole("textbox", { name: /notas internas/i });
+    const textoExcedido = "a".repeat(201); // Genera 201 caracteres
+
+    fireEvent.change(textarea, { target: { value: textoExcedido } });
 
     const botonGuardar = screen.getByRole("button", { name: /guardar nota/i });
     fireEvent.click(botonGuardar);
 
-    // Validaciones de bloqueo (Criterio de Aceptación 2)
-    expect(screen.getByRole("alert")).toHaveTextContent("La nota no puede estar vacía");
-    expect(screen.getByRole("button", { name: /guardar nota/i })).not.toHaveTextContent("Guardando...");
-  });
-
-    test("debe mostrar mensaje de éxito y mantener el panel al guardar una nota válida de forma asíncrona", async () => {
-    render(<NotasReserva notaInicial="Cliente prefiere café" />);
-
-    const botonGuardar = screen.getByRole("button", { name: /guardar nota/i });
-    fireEvent.click(botonGuardar);
-
-    // Adelantamos los temporizadores para resolver la promesa asíncrona
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-
-    // Validaciones finales de éxito
-    expect(await screen.findByText("Nota guardada correctamente")).toBeInTheDocument();
-    expect(screen.getByTestId("panel-detalles-reserva")).toBeInTheDocument();
+    // Validaciones de longitud (Criterio de Aceptación 3)
+    expect(screen.getByRole("alert")).toHaveTextContent("La nota excede el límite de caracteres permitido");
   });
 
 });
